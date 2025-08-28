@@ -11,28 +11,44 @@ function readTestCase(filename) {
     }
 }
 
-
+// Function to decode the Y values - now returns BigInt
 function decodeYValue(value, base) {
-    return parseInt(value, base);
+    const decoded = parseInt(value, base);
+    return BigInt(decoded);
 }
 
-
+// Function to perform Lagrange Interpolation using BigInt for precision
 function lagrangeInterpolation(points) {
-    let result = 0;
+    let result = BigInt(0);
     const k = points.length;
 
     for (let i = 0; i < k; i++) {
-        let term = points[i].y;
+        // Convert point coordinates to BigInt for calculations
+        const xi = BigInt(points[i].x);
+        const yi = BigInt(points[i].y);
+
+        let termNumerator = yi;
+        let termDenominator = BigInt(1);
+
         for (let j = 0; j < k; j++) {
             if (i !== j) {
-                term = term * (0 - points[j].x) / (points[i].x - points[j].x);
+                const xj = BigInt(points[j].x);
+
+                // Numerator part: (0 - x_j)
+                termNumerator *= (BigInt(0) - xj);
+
+                // Denominator part: (x_i - x_j)
+                termDenominator *= (xi - xj);
             }
         }
-        result += term;
+        // Add the current term to the result
+        // Need to perform division last to maintain precision
+        result += (termNumerator / termDenominator);
     }
-    return Math.round(result); 
+    return result;
 }
 
+// Main function to solve the assignment
 function solveAssignment(filename) {
     const testCase = readTestCase(filename);
 
@@ -53,14 +69,14 @@ function solveAssignment(filename) {
             const base = parseInt(testCase[key].base);
             const value = testCase[key].value;
 
+            // Decode Y value and store as BigInt
             const y = decodeYValue(value, base);
-            allPoints.push({ x, y });
+            allPoints.push({ x: BigInt(x), y }); // Store x also as BigInt for consistency
         }
     }
 
     // Sort points by x-value to ensure consistent selection if needed, though not strictly required for Lagrange.
-    allPoints.sort((a, b) => a.x - b.x);
-
+    allPoints.sort((a, b) => Number(a.x - b.x)); // Convert BigInt to Number for sorting comparison
 
     if (allPoints.length < k) {
         console.error("Not enough roots provided to solve for the polynomial coefficients.");
@@ -78,7 +94,6 @@ function solveAssignment(filename) {
     console.log(`\nThe Secret (C) is: ${secretC}`);
     return secretC;
 }
-
 
 
 // Example usage with the first sample test case
